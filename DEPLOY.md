@@ -50,7 +50,9 @@ Python: python                        # Windows 路径
 Runner: D:\...\whisper_runner.py
 ```
 
-**首次跑转写时**，Whisper 会自动从 `~/.cache/whisper/`（Linux）或 `%USERPROFILE%\.cache\whisper\`（Windows）下载模型权重。`tiny` 约 75 MB，几秒就好；`large-v3` 约 2.9 GB。
+**模型权重目录**：项目根目录下的 `models/whisper/`。Whisper 会自动从这个目录读，模型不存在时下载到这里（不会写到 `~/.cache/whisper/`）。`tiny` 约 75 MB，`large-v3` 约 2.9 GB。
+
+如果想用其他位置：改 `whisper_runner.py` 里的 `MODEL_DIR` 变量。
 
 ## 三、端到端验证
 

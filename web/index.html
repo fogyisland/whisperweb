@@ -56,7 +56,9 @@
       border-bottom: none;
     }
     .action .go::after { content: "→"; }
-    @media (max-width: 880px) { .actions { grid-template-columns: 1fr; } }
+    @media (max-width: 880px) {
+      .actions { grid-template-columns: 1fr; }
+    }
 
     .secondary {
       display: grid;
@@ -116,7 +118,7 @@
         <div class="actions">
           <a class="action" href="playground.html">
             <div class="icon-wrap"><span data-icon="music"></span></div>
-            <h2>沙盘</h2>
+            <h2>运行平台</h2>
             <p>上传音频或用内置 JFK 样本。挑模型、温度、词级时间戳等参数，点运行看实时结果。</p>
             <span class="go">开始转写</span>
           </a>
@@ -163,7 +165,7 @@
     window.WW_HEALTH.onUpdate((info) => {
       if (!info || info.ok) return;
       document.querySelectorAll("a.action").forEach((el) => {
-        // 输出格式 / 模型 / 语言 页仍可访问；沙盘和命令行依赖 Python
+        // 输出格式 / 模型 / 语言 页仍可访问；运行平台和命令行依赖 Python
         const href = el.getAttribute("href");
         if (href === "playground.html" || href === "cli.html") {
           el.classList.add("disabled");

@@ -29,6 +29,10 @@ LOCAL_WHISPER = os.path.join(HERE, "Whisper")
 if os.path.isdir(LOCAL_WHISPER):
     sys.path.insert(0, LOCAL_WHISPER)
 
+# 模型权重固定到项目内的 models/whisper 目录，避免每次重新下载
+MODEL_DIR = os.path.join(HERE, "models", "whisper")
+os.makedirs(MODEL_DIR, exist_ok=True)
+
 
 def emit(obj):
     """把一行 JSON 写到 stdout 并 flush，供 Node.js SSE 流读取。"""
@@ -79,10 +83,10 @@ def main():
         sys.exit(2)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    emit_stage("loading_model", model=args.model, device=device)
+    emit_stage("loading_model", model=args.model, device=device, model_dir=MODEL_DIR)
 
     try:
-        model = whisper.load_model(args.model, device=device)
+        model = whisper.load_model(args.model, device=device, download_root=MODEL_DIR)
     except Exception as e:
         emit({"event": "error", "message": "加载模型失败：%s" % e})
         sys.exit(2)

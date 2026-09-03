@@ -5,7 +5,7 @@
 
   const NAV_LINKS = [
     { href: "index.html", label: "首页" },
-    { href: "playground.html", label: "沙盘" },
+    { href: "playground.html", label: "运行平台" },
     { href: "cli.html", label: "命令行" },
     { href: "models.html", label: "模型" },
     { href: "output-formats.html", label: "输出格式" },

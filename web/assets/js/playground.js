@@ -1,4 +1,4 @@
-// Whisper 沙盘 —— 把音频 POST 给 /api/transcribe，实时消费 SSE 事件并渲染结果。
+// Whisper 运行平台 —— 把音频 POST 给 /api/transcribe，实时消费 SSE 事件并渲染结果。
 //
 // 数据来源：
 //   - 样本：fetch(currentSample.file) → Blob
@@ -154,6 +154,7 @@
     };
     return {
       model: get("model") || "turbo",
+      task: get("task") || "transcribe",
       language: get("language") || null,
       output_format: get("output_format") || "json",
       temperature: Number(get("temperature") || 0),
@@ -341,6 +342,8 @@
       setOutputTab("raw", root);
     }
     setOutputTab("transcript", root);
+    // 启用下载按钮
+    root.querySelectorAll("[data-download]").forEach((b) => { b.disabled = false; });
   }
 
   function setOutputTab(name, root) {
@@ -401,6 +404,110 @@
     $all(".output-tabs button", root).forEach((b) => {
       b.addEventListener("click", () => setOutputTab(b.getAttribute("data-tab"), root));
     });
+
+    // 任务切换（转写 / 翻译到英）：写一个隐藏 input 让 readSettings 能读到
+    let hiddenTask = root.querySelector("input[name=task]");
+    if (!hiddenTask) {
+      hiddenTask = document.createElement("input");
+      hiddenTask.type = "hidden";
+      hiddenTask.name = "task";
+      hiddenTask.value = "transcribe";
+      root.querySelector("[data-playground]") && root.appendChild(hiddenTask);
+    }
+    $all("[data-task-btn]", root).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.getAttribute("data-task-btn");
+        $all("[data-task-btn]", root).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        hiddenTask.value = v;
+        // 选了「翻译到英」时，禁止选 turbo（turbo 不支持翻译）
+        const modelSel = $("[name=model]", root);
+        if (modelSel) {
+          const opt = modelSel.options[modelSel.selectedIndex];
+          if (v === "translate" && opt && opt.text && opt.text.startsWith("turbo")) {
+            // 选第一个非 turbo 选项
+            for (let i = 0; i < modelSel.options.length; i++) {
+              if (!modelSel.options[i].text.startsWith("turbo")) { modelSel.selectedIndex = i; break; }
+            }
+          }
+        }
+      });
+    });
+
+    // 下载按钮
+    $all("[data-download]", root).forEach((btn) => {
+      btn.addEventListener("click", () => downloadFile(btn.getAttribute("data-download"), root));
+    });
+  }
+
+  // ===== 下载 =====
+  function plainTextFromResult(result) {
+    if (!result || !result.segments || !result.segments.length) return "";
+    return result.segments
+      .map((s) => (s.text || "").trim())
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  function timestamped() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+
+  function downloadFile(format, root) {
+    if (!lastResult) {
+      alert("还没有结果。先点 ▶ 运行。");
+      return;
+    }
+
+    let content = "";
+    let mime = "text/plain;charset=utf-8";
+    let ext = format;
+    const baseName = `whisper-${timestamped()}`;
+
+    if (format === "txt") {
+      // 纯文本：仅文字，空格拼接，无任何元数据
+      const r = lastResult.format === "json" ? lastResult.result : null;
+      content = r ? plainTextFromResult(r) : (lastResult.text || "");
+      mime = "text/plain;charset=utf-8";
+    } else if (format === "json") {
+      if (lastResult.format !== "json") {
+        alert("当前结果不是 JSON 格式（来自 " + lastResult.format + " 输出）。切到「原始」标签可以查看内容。");
+        return;
+      }
+      content = JSON.stringify(lastResult.result, null, 2);
+      mime = "application/json;charset=utf-8";
+    } else if (format === "vtt" || format === "srt" || format === "tsv" || format === "jsonl") {
+      if (lastResult.format !== "json" || !lastResult.result) {
+        alert("需要 JSON 格式的结果才能导出 " + format.toUpperCase() + "。在「运行」前把输出格式选成 " + format.toUpperCase() + " 再跑一次，或在「原始」标签查看当前内容。");
+        return;
+      }
+      // 用 simulator 的 writer（它的 writeFor 接口接受任意 segments 形状）
+      if (!window.WW_SIM || !window.WW_SIM.writeFor) {
+        alert("下载器未加载。");
+        return;
+      }
+      content = window.WW_SIM.writeFor(format, lastResult.result);
+      if (format === "tsv") mime = "text/tab-separated-values;charset=utf-8";
+      else if (format === "vtt") mime = "text/vtt;charset=utf-8";
+      else if (format === "srt") mime = "application/x-subrip;charset=utf-8";
+      else if (format === "jsonl") mime = "application/x-ndjson;charset=utf-8";
+    } else {
+      return;
+    }
+
+    // BOM 让 Windows 记事本正确识别 UTF-8
+    const blob = new Blob(["﻿" + content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${baseName}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 100);
   }
 
   function initPlayground() {

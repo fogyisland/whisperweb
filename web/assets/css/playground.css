@@ -424,6 +424,48 @@ details.advanced .advanced-body {
   background: var(--bg);
   margin-top: var(--space-4);
 }
+
+/* 下载按钮行 */
+.download-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+.dl-btn-primary {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-1);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-14);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.dl-btn-primary code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--fs-12);
+  color: var(--ink-faint);
+}
+.dl-btn-primary:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.dl-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.dl-btn-primary:disabled:hover {
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--ink);
+}
 .audio-player audio { flex: 1; min-width: 0; }
 .audio-player .play-state {
   font-family: "JetBrains Mono", monospace;

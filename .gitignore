@@ -15,7 +15,13 @@ venv/
 # Whisper Python 源码（独立 git 仓库，按 DEPLOY.md 文档单独克隆）
 Whisper/
 
-# 模型缓存（首次运行时 Whisper 自动下载到 ~/.cache/whisper/，与项目无关）
+# 模型缓存（Whisper 权重，下载一次后缓存在项目内的 models/whisper/）
+models/
+
+# 构建产物（不提交；publish.bat 或 publish.sh 现场重建）
+publish/
+
+# 旧版 Whisper 默认缓存位置（保留以防旧的 ~/.cache/whisper 文件还存在）
 .cache/
 
 # 系统 / 编辑器
