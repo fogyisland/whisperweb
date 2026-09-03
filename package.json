@@ -1,0 +1,13 @@
+{
+  "name": "whisper-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Whisper 中文手册 —— 静态前端 + Node.js 服务 + Python Whisper 后端",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

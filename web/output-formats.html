@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Whisper 的 6 种输出格式：TXT、WebVTT、SRT、TSV、JSON、JSONL。" />
+  <title>输出格式 —— Whisper 中文手册</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23C25A2C'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%23FAF7F2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/playground.css" />
+  <style>
+    html:not(.theme-dark) { color-scheme: light; }
+    html.theme-dark { color-scheme: dark; }
+    .format-switcher {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-1);
+      overflow: hidden;
+      background: var(--bg);
+      width: fit-content;
+      margin-bottom: var(--space-4);
+    }
+    .format-switcher button {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: var(--space-2) var(--space-4);
+      font-size: var(--fs-14);
+      color: var(--ink-mute);
+      font-family: "JetBrains Mono", monospace;
+    }
+    .format-switcher button[aria-pressed="true"] {
+      background: var(--accent-soft);
+      color: var(--ink);
+    }
+    .format-switcher button + button { border-left: 1px solid var(--line); }
+    .format-desc { color: var(--ink-mute); margin-bottom: var(--space-4); }
+  </style>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("whisperweb:theme");
+        var dark = stored ? stored === "dark" : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("theme-dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/samples.js"></script>
+  <script src="assets/js/simulator.js"></script>
+  <script>
+    (function () {
+      const sample = (window.WW_SAMPLES || [])[0];
+      const base = sample && sample.results && sample.results.en;
+
+      let currentFormat = "vtt";
+      function render() {
+        const out = window.WW_SIM.writeFor(currentFormat, base);
+        const code = document.querySelector("[data-out]");
+        if (code) code.textContent = out;
+        const desc = document.querySelector("[data-format-desc]");
+        if (desc) {
+          const map = {
+            txt: "纯文本。每行一段。无时间戳。",
+            vtt: "WebVTT。网页视频播放器原生支持。",
+            srt: "SubRip。视频剪辑软件和大部分播放器通用。",
+            tsv: "制表符分隔。start（毫秒）、end（毫秒）、text。",
+            json: "完整结果对象。包含 language_probs、各分段温度、对数概率等元数据。",
+            jsonl: "JSON Lines。每行一个分段对象，可流式处理。",
+          };
+          desc.textContent = map[currentFormat] || "";
+        }
+        document.querySelectorAll("[data-fmt-btn]").forEach((b) => {
+          b.setAttribute("aria-pressed", String(b.getAttribute("data-fmt-btn") === currentFormat));
+        });
+      }
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-fmt-btn]");
+        if (!b) return;
+        currentFormat = b.getAttribute("data-fmt-btn");
+        render();
+      });
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", render);
+      } else {
+        render();
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div data-site-header></div>
+  <div class="health-bar" data-health-bar>
+    <div class="container">
+      <span data-health-badge></span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: var(--fs-12); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 var(--space-3);">
+        § 输出格式
+      </p>
+      <h1>同一份转写，六种形状。</h1>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        <code>utils.py</code> 自带六种 writer，每种接收同一个 <code>result</code> 字典，写出不同字节。点击下方按钮切换，看同一份 JFK 转写在每种格式下的实际内容。
+      </p>
+
+      <div class="section-marker">§ 01 —— 实时切换</div>
+
+      <div class="format-switcher" role="tablist">
+        <button type="button" data-fmt-btn="txt" aria-pressed="false">txt</button>
+        <button type="button" data-fmt-btn="vtt" aria-pressed="true">vtt</button>
+        <button type="button" data-fmt-btn="srt" aria-pressed="false">srt</button>
+        <button type="button" data-fmt-btn="tsv" aria-pressed="false">tsv</button>
+        <button type="button" data-fmt-btn="json" aria-pressed="false">json</button>
+        <button type="button" data-fmt-btn="jsonl" aria-pressed="false">jsonl</button>
+      </div>
+      <p class="format-desc" data-format-desc></p>
+
+      <div class="panel">
+        <pre style="margin: 0; max-height: 480px; overflow: auto;"><code data-out></code></pre>
+      </div>
+
+      <div class="section-marker">§ 02 —— 信息保留差异</div>
+
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        六种格式不是等价的。它们保留的字段不同，影响下游能做什么。
+      </p>
+
+      <table class="model-table" style="margin: var(--space-4) 0;">
+        <thead>
+          <tr>
+            <th>字段</th>
+            <th>TXT</th>
+            <th>VTT</th>
+            <th>SRT</th>
+            <th>TSV</th>
+            <th>JSON</th>
+            <th>JSONL</th>
+          </tr>
+        </thead>
+        <tbody style="font-size: var(--fs-13);">
+          <tr><td>分段文本</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td>起止时间戳</td><td>—</td><td>✓</td><td>✓</td><td>毫秒</td><td>✓</td><td>✓</td></tr>
+          <tr><td>词级时间戳</td><td>—</td><td>✓（高亮）</td><td>✓（高亮）</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>语种识别概率</td><td>—</td><td>—</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+          <tr><td>对数概率 / 压缩比</td><td>—</td><td>—</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>无语音概率</td><td>—</td><td>—</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>原始词元</td><td>—</td><td>—</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+          <tr><td>语种代码</td><td>—</td><td>—</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-marker">§ 03 —— 三条值得记住的模式</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>① 评测必须用 JSON</h4>
+          <p>做 WER/CER 评测时，需要对齐到分段级别并访问 <code>no_speech_prob</code>、<code>compression_ratio</code> 等元数据。TXT/SRT/VTT 都丢掉了这些字段，只有 JSON 全保留。</p>
+        </div>
+        <div class="feature-card">
+          <h4>② WebVTT 和 SRT 的时间戳格式不一样</h4>
+          <p>VTT 用句点分隔小数（<code>00:00:01.250</code>），小时为零时省略。SRT 用逗号（<code>00:00:01,250</code>），且小时位必有。直接复制粘贴会出错。</p>
+        </div>
+        <div class="feature-card">
+          <h4>③ JSONL 是分段级别的流式格式</h4>
+          <p>JSONL 每行只放一个分段对象，没有顶层 <code>text</code> 字段。适合边解码边写盘、或者用 grep/jq 做行级过滤。JSON 适合整体读入再处理。</p>
+        </div>
+      </div>
+
+      <div class="section-marker">§ 04 —— 字幕折行与高亮</div>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        VTT 与 SRT 支持词级高亮（需要 <code>word_timestamps=True</code> 且 <code>highlight_words=True</code>），通过 <code>&lt;u&gt;...&lt;/u&gt;</code> 包裹每个词。折行由三组参数控制：
+      </p>
+      <ul style="color: var(--ink-mute); font-size: var(--fs-14); max-width: 60ch;">
+        <li><code>max_line_width</code>：单行字符上限。优先级最高。</li>
+        <li><code>max_line_count</code>：单条字幕最大行数。需配合 <code>max_line_width</code>。</li>
+        <li><code>max_words_per_line</code>：每行词数上限。与 <code>max_line_width</code> 互斥。</li>
+      </ul>
+      <p style="color: var(--ink-mute); font-size: var(--fs-14); max-width: 60ch;">
+        <code>SubtitlesWriter.iterate_result()</code> 内部按词遍历，遇到长停顿（&gt; 3 秒）会强制换段，方便阅读。
+      </p>
+    </div>
+  </main>
+  <footer class="site-footer" data-site-footer></footer>
+<script src="assets/js/health.js"></script>
+</body>
+</html>

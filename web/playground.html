@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Whisper 沙盘：上传音频、调参数，让服务器跑 Python Whisper 推理并把结果流回来。" />
+  <title>沙盘 —— Whisper 中文手册</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23C25A2C'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%23FAF7F2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/playground.css" />
+  <style>
+    html:not(.theme-dark) { color-scheme: light; }
+    html.theme-dark { color-scheme: dark; }
+  </style>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("whisperweb:theme");
+        var dark = stored ? stored === "dark" : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("theme-dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/samples.js"></script>
+  <script src="assets/js/playground.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+  <div class="health-bar" data-health-bar>
+    <div class="container">
+      <span data-health-badge></span>
+    </div>
+  </div>
+
+  <main>
+    <div class="container" data-playground>
+      <header class="playground-header">
+        <p style="font-family: 'JetBrains Mono', monospace; font-size: var(--fs-12); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 var(--space-3);">
+          § 沙盘
+        </p>
+        <h1>上传音频，让服务器跑一遍 Whisper。</h1>
+        <p>
+          选一段样本（或上传自己的音频），挑模型与参数，点运行。Node 端会调起 Python <code>whisper_runner.py</code>，把进度用 SSE 一段段推回来，再把最终转写渲染在右侧。点击转写行，音频跳到那一秒。
+        </p>
+      </header>
+
+      <div class="playground">
+        <div>
+          <div class="panel">
+            <h3 class="panel-title">1. 音频</h3>
+
+            <div class="field">
+              <label for="sample_id">样本 <span class="field-python">sample_id</span></label>
+              <select id="sample_id" name="sample_id"></select>
+              <span class="field-hint" data-sample-hint></span>
+            </div>
+
+            <div class="field" style="margin-top: var(--space-4);">
+              <label for="upload">或上传自己的文件</label>
+              <input type="file" id="upload" name="upload" accept="audio/*" />
+              <span class="field-hint" id="upload-hint">支持 mp3 / wav / flac / m4a / ogg。文件发到本机 Node 服务，不会外传。</span>
+            </div>
+
+            <div class="waveform">
+              <canvas data-waveform></canvas>
+              <div class="placeholder" data-waveform-placeholder>选个样本或上传文件后这里画波形。</div>
+              <span class="duration" data-duration>—</span>
+            </div>
+
+            <audio data-audio controls preload="metadata" style="width:100%; margin-top: var(--space-3);"></audio>
+          </div>
+
+          <div class="panel">
+            <h3 class="panel-title">2. 模型与语种</h3>
+            <div class="field">
+              <label for="model">模型 <span class="field-python">model</span></label>
+              <select id="model" name="model"></select>
+              <span class="field-hint">服务器首次加载会下载权重（tiny 约 75 MB，large-v3 约 2.9 GB）。</span>
+            </div>
+
+            <div class="field">
+              <label for="language">语种 <span class="field-python">language</span></label>
+              <select id="language" name="language"></select>
+              <span class="field-hint">留空让 Whisper 自动识别。</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3 class="panel-title">3. 解码参数</h3>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="temperature">温度 <span class="field-python">temperature</span></label>
+                <div class="field-slider">
+                  <input type="range" id="temperature" name="temperature" min="0" max="1" step="0.05" value="0" />
+                  <span class="value" data-temp-val>0.00</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="beam_size">束宽 <span class="field-python">beam_size</span></label>
+                <div class="field-slider">
+                  <input type="range" id="beam_size" name="beam_size" min="1" max="10" step="1" value="5" />
+                  <span class="value" data-beam-val>5</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="toggle">
+                <input type="checkbox" name="word_timestamps" checked />
+                <span class="track"></span>
+                <span>词级时间戳 <span class="field-python">word_timestamps=True</span></span>
+              </label>
+              <span class="field-hint">每个词有起止时间。慢一些。</span>
+            </div>
+
+            <details class="advanced">
+              <summary>高级阈值与提示词</summary>
+              <div class="advanced-body">
+                <div class="field-row">
+                  <div class="field">
+                    <label for="compression_ratio_threshold">压缩比阈值 <span class="field-python">compression_ratio_threshold</span></label>
+                    <input type="number" id="compression_ratio_threshold" name="compression_ratio_threshold" step="0.1" value="2.4" />
+                  </div>
+                  <div class="field">
+                    <label for="logprob_threshold">对数概率阈值 <span class="field-python">logprob_threshold</span></label>
+                    <input type="number" id="logprob_threshold" name="logprob_threshold" step="0.1" value="-1.0" />
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="no_speech_threshold">无语音阈值 <span class="field-python">no_speech_threshold</span></label>
+                    <input type="number" id="no_speech_threshold" name="no_speech_threshold" step="0.05" value="0.6" />
+                  </div>
+                  <div class="field">
+                    <label for="initial_prompt">初始提示词 <span class="field-python">initial_prompt</span></label>
+                    <input type="text" id="initial_prompt" name="initial_prompt" placeholder='例如「Whisper、OpenAI、Transformer」' />
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <h3 class="panel-title">运行</h3>
+
+            <div class="run-row">
+              <button type="button" class="btn-primary" data-run-btn>
+                <span data-icon="play" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></span>
+                运行
+              </button>
+              <span class="run-status" data-run-status>空闲。</span>
+              <select name="output_format" style="margin-left:auto; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-1); background: var(--bg);" aria-label="输出格式">
+                <option value="txt">TXT</option>
+                <option value="vtt">WebVTT</option>
+                <option value="srt">SRT</option>
+                <option value="json" selected>JSON</option>
+                <option value="jsonl">JSONL</option>
+                <option value="tsv">TSV</option>
+              </select>
+            </div>
+
+            <ul class="stages" data-stages></ul>
+
+            <div class="output-tabs" role="tablist" style="margin-top: var(--space-5);">
+              <button type="button" data-tab="transcript" aria-selected="true" role="tab">转写</button>
+              <button type="button" data-tab="segments" aria-selected="false" role="tab">分段</button>
+              <button type="button" data-tab="json" aria-selected="false" role="tab">JSON</button>
+              <button type="button" data-tab="raw" aria-selected="false" role="tab">原始 <span class="field-python" data-output-fmt>txt</span></button>
+            </div>
+
+            <div class="output-pane" data-pane="transcript">
+              <div class="empty-output">
+                <span data-icon="sparkle"></span>
+                <span>点 <strong style="color:var(--ink);">▶ 运行</strong> 让服务器开始转写。</span>
+              </div>
+            </div>
+            <div class="output-pane" data-pane="segments" hidden></div>
+            <div class="output-pane" data-pane="json" hidden></div>
+            <div class="output-pane" data-pane="raw" hidden></div>
+
+            <div class="audio-player">
+              <audio data-audio-inline controls preload="metadata"></audio>
+              <span class="play-state">—</span>
+            </div>
+          </div>
+
+          <div class="panel" style="font-size: var(--fs-14); color: var(--ink-mute);">
+            <strong style="color: var(--ink); display:block; margin-bottom: var(--space-2);">沙盘做了什么</strong>
+            <p style="margin: 0 0 var(--space-3);">
+              点击「运行」后，浏览器把音频文件 POST 到 <code>/api/transcribe</code>。Node 服务 spawn 出 Python 子进程跑 <code>whisper_runner.py</code>。Python 把每一行进度以 JSON 写到 stdout，Node 实时转成 SSE 推回浏览器。终端字幕逐条出现，最后一段是完整结果。
+            </p>
+            <p style="margin: 0;">
+              CPU 上 large-v3 一分钟音频约几分钟。tiny 模型实时性最好。GPU 会快很多。
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" data-site-footer></footer>
+
+  <script>
+    document.addEventListener("input", (e) => {
+      if (e.target.name === "temperature") document.querySelector("[data-temp-val]").textContent = Number(e.target.value).toFixed(2);
+      if (e.target.name === "beam_size") document.querySelector("[data-beam-val]").textContent = e.target.value;
+      if (e.target.name === "output_format") {
+        document.querySelector("[data-output-fmt]").textContent = e.target.value;
+      }
+    });
+
+    const mainAudio = document.querySelector("audio[data-audio]:not([data-audio-inline])");
+    const inlineAudio = document.querySelector("audio[data-audio-inline]");
+    if (mainAudio && inlineAudio) {
+      mainAudio.addEventListener("play", () => inlineAudio.play().catch(() => {}));
+      mainAudio.addEventListener("pause", () => inlineAudio.pause());
+      mainAudio.addEventListener("seeked", () => { inlineAudio.currentTime = mainAudio.currentTime; });
+    }
+  </script>
+<script src="assets/js/health.js"></script>
+</body>
+</html>

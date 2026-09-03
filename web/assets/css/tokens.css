@@ -1,0 +1,103 @@
+/* Design tokens — Section 3 of the design.
+   Light is default; .theme-dark overrides. */
+
+:root {
+  /* Colors — light (warm cream + terracotta) */
+  --bg: #FAF7F2;
+  --surface: #FFFFFF;
+  --ink: #1B1A17;
+  --ink-mute: #5C564B;
+  --ink-faint: #8C8576;
+  --line: #E5DFD3;
+  --line-strong: #C9C1AE;
+  --accent: #C25A2C;
+  --accent-hover: #A8481F;
+  --accent-soft: #F4DCCE;
+  --info: #3E6B6B;
+  --info-soft: #D8E5E5;
+  --warn: #B8862B;
+  --warn-soft: #F2E4C2;
+  --good: #4F7A4A;
+  --good-soft: #DCE8D8;
+  --code-bg: #F2EDE2;
+  --shadow-1: 0 1px 2px rgba(27, 26, 23, 0.04), 0 2px 8px rgba(27, 26, 23, 0.04);
+  --shadow-2: 0 2px 6px rgba(27, 26, 23, 0.08), 0 8px 24px rgba(27, 26, 23, 0.08);
+  --dot-grid: rgba(27, 26, 23, 0.05);
+
+  /* Type scale (1.25 modular) */
+  --fs-12: 0.75rem;     /* 12 */
+  --fs-14: 0.875rem;    /* 14 */
+  --fs-16: 1rem;        /* 16 body */
+  --fs-20: 1.25rem;     /* 20 */
+  --fs-25: 1.5625rem;   /* 25 */
+  --fs-31: 1.953rem;    /* 31 */
+  --fs-39: 2.441rem;    /* 39 */
+  --fs-49: 3.052rem;    /* 49 */
+
+  /* Spacing (8px grid + halves) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+  --space-12: 6rem;
+
+  /* Radius */
+  --radius-1: 6px;
+  --radius-2: 10px;
+  --radius-3: 16px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 240ms;
+
+  /* Layout */
+  --container: 1100px;
+  --gutter: 48px;
+  --gutter-mobile: 24px;
+  --nav-h: 64px;
+  --drawer-w: 720px;
+}
+
+.theme-dark {
+  --bg: #0E0E10;
+  --surface: #1A1A1D;
+  --ink: #F4EFE6;
+  --ink-mute: #A8A195;
+  --ink-faint: #6E685E;
+  --line: #2A2A2E;
+  --line-strong: #3F3F44;
+  --accent: #E07A4A;
+  --accent-hover: #F0956A;
+  --accent-soft: #3A2418;
+  --info: #7FB8B5;
+  --info-soft: #1F2E2E;
+  --warn: #E0B055;
+  --warn-soft: #3A2F18;
+  --good: #8FB87A;
+  --good-soft: #1F2C1B;
+  --code-bg: #16161A;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --dot-grid: rgba(244, 239, 230, 0.04);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --gutter: var(--gutter-mobile);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}

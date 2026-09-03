@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Whisper 支持的 99 种语言，来自 tokenizer.py 的完整列表。" />
+  <title>语言 —— Whisper 中文手册</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23C25A2C'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%23FAF7F2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <style>
+    html:not(.theme-dark) { color-scheme: light; }
+    html.theme-dark { color-scheme: dark; }
+    .lang-search {
+      width: 100%;
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      background: var(--bg);
+      font-size: var(--fs-16);
+      margin-bottom: var(--space-5);
+    }
+    .lang-search:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    .lang-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: var(--space-2);
+    }
+    .lang-item {
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-1);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      font-size: var(--fs-14);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: border-color var(--dur-fast) var(--ease-out);
+    }
+    .lang-item:hover { border-color: var(--accent); }
+    .lang-item .code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: var(--fs-12);
+      color: var(--ink-mute);
+      margin-left: auto;
+    }
+    .lang-item .name { color: var(--ink); }
+    .lang-item[hidden] { display: none; }
+    .lang-count {
+      font-size: var(--fs-12);
+      color: var(--ink-faint);
+      font-family: "JetBrains Mono", monospace;
+      margin-bottom: var(--space-3);
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("whisperweb:theme");
+        var dark = stored ? stored === "dark" : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("theme-dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/samples.js"></script>
+  <script>
+    (function () {
+      function render() {
+        const LANGS = window.WW_LANGUAGES || [];
+        const grid = document.querySelector("[data-langs]");
+        if (!grid) return;
+        grid.innerHTML = LANGS.map(([code, name, flag]) =>
+          `<div class="lang-item" data-name="${name.toLowerCase()}" data-code="${code}">
+            <span>${flag || "🌐"}</span>
+            <span class="name">${name}</span>
+            <span class="code">${code}</span>
+          </div>`
+        ).join("");
+        const count = document.querySelector("[data-count]");
+        if (count) count.textContent = `${LANGS.length} 种 · 来自 whisper/tokenizer.py:LANGUAGES`;
+        const search = document.querySelector("[data-search]");
+        if (search) {
+          search.addEventListener("input", () => {
+            const q = search.value.trim().toLowerCase();
+            let visible = 0;
+            grid.querySelectorAll(".lang-item").forEach((el) => {
+              const match = !q || el.getAttribute("data-name").includes(q) || el.getAttribute("data-code").includes(q);
+              el.hidden = !match;
+              if (match) visible++;
+            });
+            if (count) count.textContent = `${visible} / ${LANGS.length} 种`;
+          });
+        }
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", render);
+      } else {
+        render();
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div data-site-header></div>
+  <div class="health-bar" data-health-bar>
+    <div class="container">
+      <span data-health-badge></span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: var(--fs-12); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 var(--space-3);">
+        § 语言
+      </p>
+      <h1>99 种语言，共用一个词表。</h1>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        Whisper 的词表里定义了 99 个语种词元（<code>&lt;|en|&gt;</code>、<code>&lt;|zh|&gt;</code>、……），用来在解码前指定语言方向。也可以不指定，让模型自己判断（见 <code>detect_language()</code>）。
+      </p>
+
+      <div class="section-marker">§ 01 —— 完整目录</div>
+      <p class="lang-count" data-count></p>
+      <input type="search" class="lang-search" placeholder="按名称或代码搜索（en、chinese、ja、yue……）" data-search aria-label="筛选语言" />
+      <div class="lang-grid" data-langs></div>
+
+      <div class="section-marker">§ 02 —— 三个不易察觉的细节</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>① 自动识别只跑一次</h4>
+          <p><code>detect_language()</code> 用音频的前 30 秒做一次前向，返回 99 个语种的概率分布。后续所有窗口沿用这次识别结果，不重新跑。这意味着音频开头切得不准确会让整篇跑偏。</p>
+        </div>
+        <div class="feature-card">
+          <h4>② 中文内部有三档</h4>
+          <p><code>zh</code> 是普通话，<code>yue</code> 是粤语。两者底层词表相同，但解码时走不同的语言条件。如果你的音频是粤语，必须显式指定 <code>language=yue</code>，否则会被识别成普通话或英语。</p>
+        </div>
+        <div class="feature-card">
+          <h4>③ 名字与代码都能传入</h4>
+          <p>传入 <code>language="chinese"</code> 和 <code>language="zh"</code> 等价。代码在 <code>tokenizer.py:get_tokenizer()</code> 里通过 <code>TO_LANGUAGE_CODE</code> 做了一次映射。同时支持常见别名（burmese、mandarin、castilian 等）。</p>
+        </div>
+      </div>
+
+      <div class="section-marker">§ 03 —— 性能不是均匀分布的</div>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        Whisper 的训练数据在不同语言上的覆盖度差别很大。从论文和公开 WER 报告看：
+      </p>
+      <ul style="color: var(--ink-mute); max-width: 60ch; font-size: var(--fs-14);">
+        <li><strong>强项</strong>（WER 较低）：英语、法语、德语、西班牙语、意大利语、葡萄牙语、日语、韩语、普通话。</li>
+        <li><strong>中等</strong>：俄语、波兰语、土耳其语、荷兰语、瑞典语、印尼语、越南语。</li>
+        <li><strong>较弱</strong>：粤语、泰语、缅甸语等训练样本少的语种，词错误率可能比英语高 3–5 倍。</li>
+        <li><strong>极弱</strong>：部分非洲与太平洋小语种（如林加拉语、绍纳语），转写基本可用，但翻译不可靠。</li>
+      </ul>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        做业务选型时，如果目标语种落在「较弱」一档，应当先实测再决定要不要依赖 Whisper。
+      </p>
+    </div>
+  </main>
+  <footer class="site-footer" data-site-footer></footer>
+<script src="assets/js/health.js"></script>
+</body>
+</html>

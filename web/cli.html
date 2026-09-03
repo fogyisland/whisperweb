@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Whisper 命令行界面完整说明：所有 flag 的功能与默认值。" />
+  <title>命令行 —— Whisper 中文手册</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23C25A2C'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%23FAF7F2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <style>
+    html:not(.theme-dark) { color-scheme: light; }
+    html.theme-dark { color-scheme: dark; }
+    .cli-section {
+      padding: var(--space-5);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-2);
+      margin-bottom: var(--space-4);
+    }
+    .cli-section h3 { font-size: var(--fs-25); margin-bottom: var(--space-3); }
+    .cli-row {
+      display: grid;
+      grid-template-columns: 280px 1fr 140px;
+      gap: var(--space-3);
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--line);
+      font-size: var(--fs-14);
+    }
+    .cli-row:last-child { border-bottom: 0; }
+    .cli-row code { font-family: "JetBrains Mono", monospace; font-size: var(--fs-13); color: var(--accent); }
+    .cli-row .default {
+      font-family: "JetBrains Mono", monospace;
+      font-size: var(--fs-12);
+      color: var(--ink-faint);
+      text-align: right;
+    }
+    .cli-row .desc { color: var(--ink-mute); }
+    .quickstart {
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-2);
+      padding: var(--space-4);
+      margin: var(--space-4) 0;
+    }
+    .quickstart h4 { font-family: "Fraunces", serif; margin-bottom: var(--space-3); font-size: var(--fs-16); }
+    .quickstart pre { margin: 0; background: transparent; border: 0; padding: 0; }
+    @media (max-width: 760px) {
+      .cli-row { grid-template-columns: 1fr; gap: var(--space-1); }
+      .cli-row .default { text-align: left; }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("whisperweb:theme");
+        var dark = stored ? stored === "dark" : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("theme-dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/samples.js"></script>
+  <style>
+    .builder {
+      padding: var(--space-5);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-2);
+      margin: var(--space-4) 0;
+    }
+    .builder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+    .builder label {
+      display: block;
+      font-size: var(--fs-13);
+      color: var(--ink-mute);
+      margin-bottom: var(--space-1);
+    }
+    .builder select,
+    .builder input[type="text"],
+    .builder input[type="number"] {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-1);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: var(--fs-14);
+    }
+    .builder .cmd {
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-1);
+      padding: var(--space-3) var(--space-4);
+      font-family: "JetBrains Mono", monospace;
+      font-size: var(--fs-13);
+      color: var(--ink);
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    .builder .builder-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+    .builder .builder-actions button {
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-14);
+    }
+    .flag-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 100px;
+      gap: var(--space-2);
+      align-items: center;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--line);
+      font-size: var(--fs-14);
+    }
+    .flag-row:last-child { border-bottom: 0; }
+    .flag-row code { font-family: "JetBrains Mono", monospace; font-size: var(--fs-13); color: var(--accent); }
+    .flag-row input[type="text"],
+    .flag-row input[type="number"] {
+      padding: var(--space-1) var(--space-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-1);
+      background: var(--bg);
+      font-size: var(--fs-13);
+    }
+    .builder .output {
+      margin-top: var(--space-4);
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-1);
+      padding: var(--space-3) var(--space-4);
+      max-height: 360px;
+      overflow: auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: var(--fs-12);
+      white-space: pre-wrap;
+    }
+  </style>
+  <script>
+    (function () {
+      function buildCommand() {
+        const inputFile = document.getElementById("cb-input").value.trim() || "audio.mp3";
+        const model = document.getElementById("cb-model").value;
+        const lang = document.getElementById("cb-lang").value;
+        const outputFormat = document.getElementById("cb-format").value;
+        const temperature = document.getElementById("cb-temp").value;
+        const beamSize = document.getElementById("cb-beam").value;
+        const wordTs = document.getElementById("cb-word-ts").checked;
+        const initialPrompt = document.getElementById("cb-prompt").value;
+
+        let parts = ["whisper", inputFile];
+        parts.push("--model", model);
+        if (lang) parts.push("--language", lang);
+        if (outputFormat !== "all") parts.push("--output_format", outputFormat);
+        if (temperature && temperature !== "0") parts.push("--temperature", temperature);
+        if (beamSize && beamSize !== "5") parts.push("--beam_size", beamSize);
+        if (wordTs) parts.push("--word_timestamps", "True");
+        if (initialPrompt.trim()) parts.push("--initial_prompt", '"' + initialPrompt.replace(/"/g, '\\"') + '"');
+        return parts.join(" ");
+      }
+
+      function updateCommand() {
+        const cmd = buildCommand();
+        document.getElementById("cb-cmd").textContent = cmd + "\n";
+      }
+
+      function copyCommand() {
+        const cmd = buildCommand();
+        navigator.clipboard.writeText(cmd).then(
+          () => { document.getElementById("cb-status").textContent = "已复制。"; },
+          () => { document.getElementById("cb-status").textContent = "复制失败，请手动选取。"; }
+        );
+      }
+
+      function runOnServer() {
+        const cmd = buildCommand();
+        const cmdEl = document.getElementById("cb-cmd");
+        const status = document.getElementById("cb-status");
+        const output = document.getElementById("cb-output");
+        const inputFile = document.getElementById("cb-input").value.trim();
+
+        if (!window.WW_SAMPLES || !window.WW_SAMPLES.length) {
+          status.textContent = "样本数据未加载。";
+          return;
+        }
+        const sample = window.WW_SAMPLES.find((s) => inputFile.endsWith(s.file.split("/").pop()) || inputFile === s.id) || window.WW_SAMPLES[0];
+
+        const model = document.getElementById("cb-model").value;
+        const lang = document.getElementById("cb-lang").value;
+        const outputFormat = document.getElementById("cb-format").value;
+        const temperature = document.getElementById("cb-temp").value;
+        const beamSize = document.getElementById("cb-beam").value;
+        const wordTs = document.getElementById("cb-word-ts").checked;
+        const initialPrompt = document.getElementById("cb-prompt").value;
+
+        status.textContent = "上传 + 推理中…";
+        output.textContent = "";
+        output.hidden = false;
+
+        fetch(sample.file)
+          .then((r) => r.blob())
+          .then((blob) => {
+            const fd = new FormData();
+            fd.append("audio", blob, sample.file.split("/").pop());
+            fd.append("model", model);
+            if (lang) fd.append("language", lang);
+            fd.append("output_format", outputFormat);
+            if (temperature && temperature !== "0") fd.append("temperature", temperature);
+            if (beamSize) fd.append("beam_size", beamSize);
+            if (wordTs) fd.append("word_timestamps", "true");
+            if (initialPrompt.trim()) fd.append("initial_prompt", initialPrompt);
+
+            return fetch("/api/transcribe", { method: "POST", body: fd });
+          })
+          .then((response) => {
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
+            let evt = "message";
+            let dataLines = [];
+            const flush = () => {
+              if (!dataLines.length) { evt = "message"; return; }
+              try {
+                const obj = JSON.parse(dataLines.join("\n"));
+                if (obj.event === "stage") {
+                  output.textContent += "[" + obj.stage + (obj.ms ? " " + obj.ms + "ms" : "") + (obj.model ? " " + obj.model : "") + "]\n";
+                } else if (obj.event === "segment") {
+                  output.textContent += "  segment #" + obj.id + "  " + obj.start + "→" + obj.end + "  " + JSON.stringify(obj.text || "") + "\n";
+                } else if (obj.event === "result") {
+                  output.textContent += "\n=== RESULT (" + obj.format + ") ===\n";
+                  output.textContent += obj.text || JSON.stringify(obj.result, null, 2);
+                  status.textContent = "完成。";
+                } else if (obj.event === "error") {
+                  output.textContent += "[error] " + obj.message + "\n";
+                  status.textContent = "错误。";
+                }
+              } catch (e) { /* ignore */ }
+              dataLines = [];
+              evt = "message";
+            };
+            function pump() {
+              return reader.read().then(({ done, value }) => {
+                if (done) { flush(); return; }
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+                for (const line of lines) {
+                  if (line.startsWith("event:")) { flush(); evt = line.slice(6).trim(); }
+                  else if (line.startsWith("data:")) { dataLines.push(line.slice(5).trim()); }
+                  else if (line === "") { flush(); }
+                }
+                return pump();
+              });
+            }
+            return pump();
+          })
+          .catch((err) => {
+            status.textContent = "失败：" + err.message;
+            output.textContent += "\n[client error] " + err.message + "\n";
+          });
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        // 填充模型下拉
+        const modelSel = document.getElementById("cb-model");
+        const LANGS = window.WW_LANGUAGES || [];
+        const langSel = document.getElementById("cb-lang");
+        langSel.innerHTML = `<option value="">自动识别</option>` +
+          LANGS.map(([code, name]) => `<option value="${code}">${name} (${code})</option>`).join("");
+        if (window.WW_MODELS) {
+          const en = window.WW_MODELS.filter((m) => m.en_only);
+          const multi = window.WW_MODELS.filter((m) => !m.en_only);
+          modelSel.innerHTML =
+            `<optgroup label="English-only">${en.map((m) => `<option value="${m.id}">${m.id}</option>`).join("")}</optgroup>` +
+            `<optgroup label="Multilingual">${multi.map((m) => `<option value="${m.id}">${m.id}</option>`).join("")}</optgroup>`;
+        }
+        // 默认输入文件名指向第一个样本
+        const sample = window.WW_SAMPLES && window.WW_SAMPLES[0];
+        if (sample) document.getElementById("cb-input").value = sample.file.split("/").pop();
+
+        // 绑定事件
+        ["cb-input","cb-model","cb-lang","cb-format","cb-temp","cb-beam","cb-word-ts","cb-prompt"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.addEventListener("input", updateCommand);
+          el.addEventListener("change", updateCommand);
+        });
+        document.getElementById("cb-copy").addEventListener("click", copyCommand);
+        document.getElementById("cb-run").addEventListener("click", runOnServer);
+        updateCommand();
+      });
+    })();
+  </script>
+</head>
+<body>
+  <div data-site-header></div>
+  <div class="health-bar" data-health-bar>
+    <div class="container">
+      <span data-health-badge></span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: var(--fs-12); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 var(--space-3);">
+        § 命令行
+      </p>
+      <h1><code>whisper</code> 命令完整说明。</h1>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        下面每个 flag 都在 <code>whisper/__main__.py:cli()</code> 里注册。默认值由 <code>argparse.ArgumentDefaultsHelpFormatter</code> 自动填进 <code>--help</code> 输出。
+      </p>
+
+      <div class="section-marker">§ 00 —— 命令行生成器 + 在服务器运行</div>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        勾选/填写下面的参数，命令行会实时更新。「在服务器运行」会拿 JFK 样本音频（<code>assets/samples/jfk-en.flac</code>）POST 给 <code>/api/transcribe</code>，把 Python 子进程的 SSE 流打到这里。
+      </p>
+
+      <div class="builder">
+        <div class="builder-grid">
+          <div>
+            <label>输入文件</label>
+            <input type="text" id="cb-input" placeholder="audio.mp3" />
+          </div>
+          <div>
+            <label>模型</label>
+            <select id="cb-model"></select>
+          </div>
+          <div>
+            <label>语种</label>
+            <select id="cb-lang"></select>
+          </div>
+          <div>
+            <label>输出格式</label>
+            <select id="cb-format">
+              <option value="all">all</option>
+              <option value="txt">txt</option>
+              <option value="vtt">vtt</option>
+              <option value="srt">srt</option>
+              <option value="json" selected>json</option>
+              <option value="jsonl">jsonl</option>
+              <option value="tsv">tsv</option>
+            </select>
+          </div>
+          <div>
+            <label>温度 (0–1)</label>
+            <input type="number" id="cb-temp" min="0" max="1" step="0.05" value="0" />
+          </div>
+          <div>
+            <label>束宽</label>
+            <input type="number" id="cb-beam" min="1" max="10" step="1" value="5" />
+          </div>
+        </div>
+
+        <div class="flag-row">
+          <code>--word_timestamps</code>
+          <label style="margin: 0; color: var(--ink);">提取词级时间戳</label>
+          <input type="checkbox" id="cb-word-ts" />
+        </div>
+
+        <div class="flag-row">
+          <code>--initial_prompt</code>
+          <label style="margin: 0; color: var(--ink);">初始提示词</label>
+          <input type="text" id="cb-prompt" placeholder='例如 "Whisper、OpenAI"' style="grid-column: 2 / -1;" />
+        </div>
+
+        <div class="cmd" id="cb-cmd"></div>
+
+        <div class="builder-actions">
+          <button class="btn-primary" id="cb-run">在服务器运行</button>
+          <button class="btn-ghost" id="cb-copy" style="background: transparent;">复制命令行</button>
+          <span id="cb-status" style="margin-left: auto; color: var(--ink-faint); font-size: var(--fs-13); align-self: center;"></span>
+        </div>
+
+        <pre class="output" id="cb-output" hidden></pre>
+      </div>
+
+      <div class="section-marker">§ 01 —— 三个常用调用</div>
+
+      <div class="quickstart">
+        <h4>1. 转写一个文件</h4>
+<pre><code>whisper audio.mp3 --model turbo</code></pre>
+      </div>
+      <div class="quickstart">
+        <h4>2. 日语翻译成英语</h4>
+<pre><code>whisper japanese.wav --model medium --language Japanese --task translate</code></pre>
+      </div>
+      <div class="quickstart">
+        <h4>3. 带词级高亮的字幕</h4>
+<pre><code>whisper audio.flac --model turbo --output_format srt --word_timestamps True --highlight_words True</code></pre>
+      </div>
+
+      <div class="section-marker">§ 02 —— 全部 flag</div>
+
+      <div class="cli-section">
+        <h3>模型与设备</h3>
+        <div class="cli-row"><code>--model NAME</code><span class="desc">模型名（12 个之一）或检查点路径。</span><span class="default">turbo</span></div>
+        <div class="cli-row"><code>--model_dir PATH</code><span class="desc">模型权重缓存目录。</span><span class="default">~/.cache/whisper</span></div>
+        <div class="cli-row"><code>--device DEVICE</code><span class="desc">cuda、cpu 或具体设备标识。</span><span class="default">cuda</span></div>
+        <div class="cli-row"><code>--fp16 BOOL</code><span class="desc">是否使用 float16 推理。</span><span class="default">True</span></div>
+        <div class="cli-row"><code>--threads N</code><span class="desc">CPU 线程数（0 = torch 默认）。</span><span class="default">0</span></div>
+      </div>
+
+      <div class="cli-section">
+        <h3>任务与语种</h3>
+        <div class="cli-row"><code>--task</code><span class="desc">transcribe 或 translate。</span><span class="default">transcribe</span></div>
+        <div class="cli-row"><code>--language LANG</code><span class="desc">ISO 代码或语言名。省略则自动识别。</span><span class="default">None</span></div>
+      </div>
+
+      <div class="cli-section">
+        <h3>解码</h3>
+        <div class="cli-row"><code>--temperature</code><span class="desc">采样温度。0 为贪心。</span><span class="default">0</span></div>
+        <div class="cli-row"><code>--best_of N</code><span class="desc">采样条数（仅 t &gt; 0 有效）。</span><span class="default">5</span></div>
+        <div class="cli-row"><code>--beam_size N</code><span class="desc">束宽（仅 t = 0 有效）。</span><span class="default">5</span></div>
+        <div class="cli-row"><code>--patience</code><span class="desc">束搜索耐心因子。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--length_penalty</code><span class="desc">长度惩罚（0–1）。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--suppress_tokens</code><span class="desc">要屏蔽的词元 id，逗号分隔。-1 表示内置非语音集。</span><span class="default">-1</span></div>
+        <div class="cli-row"><code>--initial_prompt</code><span class="desc">首窗解码的提示词。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--carry_initial_prompt</code><span class="desc">是否把提示词前置到每个窗口。</span><span class="default">False</span></div>
+        <div class="cli-row"><code>--condition_on_previous_text</code><span class="desc">是否把上一窗输出当下一窗 prompt。</span><span class="default">True</span></div>
+      </div>
+
+      <div class="cli-section">
+        <h3>输出</h3>
+        <div class="cli-row"><code>--output_dir, -o</code><span class="desc">输出目录。</span><span class="default">.</span></div>
+        <div class="cli-row"><code>--output_format, -f</code><span class="desc">txt、vtt、srt、tsv、json、jsonl，或 all。</span><span class="default">all</span></div>
+        <div class="cli-row"><code>--verbose</code><span class="desc">是否实时把转写打到 stdout。</span><span class="default">True</span></div>
+      </div>
+
+      <div class="cli-section">
+        <h3>阈值与切片</h3>
+        <div class="cli-row"><code>--temperature_increment_on_fallback</code><span class="desc">温度链步长。</span><span class="default">0.2</span></div>
+        <div class="cli-row"><code>--compression_ratio_threshold</code><span class="desc">压缩比上限。超过视为失败。</span><span class="default">2.4</span></div>
+        <div class="cli-row"><code>--logprob_threshold</code><span class="desc">对数概率下限。低于视为失败。</span><span class="default">-1.0</span></div>
+        <div class="cli-row"><code>--no_speech_threshold</code><span class="desc">无语音概率阈值。</span><span class="default">0.6</span></div>
+        <div class="cli-row"><code>--word_timestamps</code><span class="desc">是否提取词级时间戳。</span><span class="default">False</span></div>
+        <div class="cli-row"><code>--highlight_words</code><span class="desc">在 SRT/VTT 中用 <code>&lt;u&gt;</code> 高亮说出的词。</span><span class="default">False</span></div>
+        <div class="cli-row"><code>--max_line_width</code><span class="desc">字幕单行字符数。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--max_line_count</code><span class="desc">字幕最多行数。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--max_words_per_line</code><span class="desc">字幕每行最多词数。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--clip_timestamps</code><span class="desc">起、止、起、止……逗号分隔。</span><span class="default">0</span></div>
+        <div class="cli-row"><code>--hallucination_silence_threshold</code><span class="desc">跳过静音段以避开幻觉。</span><span class="default">None</span></div>
+        <div class="cli-row"><code>--prepend_punctuations</code><span class="desc">合并到下一词的标点。</span><span class="default">"'\"“¿([{-</span></div>
+        <div class="cli-row"><code>--append_punctuations</code><span class="desc">合并到上一词的标点。</span><span class="default">"'".。,，!！?？:：”)]}、</span></div>
+      </div>
+
+      <div class="section-marker">§ 03 —— 三条值得记住的模式</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>① <code>--output_format all</code> 是默认</h4>
+          <p>命令行下默认同时写六种格式。需要单种格式显式指定。做管道处理时记得指定 json 或 jsonl，否则会落一堆 TXT/VTT 垃圾。</p>
+        </div>
+        <div class="feature-card">
+          <h4>② <code>--word_timestamps</code> 没开时词级参数无效</h4>
+          <p><code>--highlight_words</code>、<code>--max_line_width</code>、<code>--max_line_count</code>、<code>--max_words_per_line</code> 都依赖词级时间戳。<code>--word_timestamps=False</code> 时这些参数会被 argparse 报错。</p>
+        </div>
+        <div class="feature-card">
+          <h4>③ <code>--max_line_count</code> 单独没意义</h4>
+          <p>不指定 <code>--max_line_width</code> 时，<code>--max_line_count</code> 没有参照基准。源码在 CLI 里只发警告不报错，容易忽略。</p>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer" data-site-footer></footer>
+<script src="assets/js/health.js"></script>
+</body>
+</html>

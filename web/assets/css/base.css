@@ -1,0 +1,139 @@
+/* Base reset + global typography */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: var(--fs-16);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, var(--dot-grid) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  transition: background-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Fraunces", "Iowan Old Style", "Georgia", serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0 0 var(--space-4);
+  color: var(--ink);
+}
+
+h1 { font-size: var(--fs-49); letter-spacing: -0.02em; }
+h2 { font-size: var(--fs-39); letter-spacing: -0.015em; }
+h3 { font-size: var(--fs-31); }
+h4 { font-size: var(--fs-25); }
+h5 { font-size: var(--fs-20); }
+
+p { margin: 0 0 var(--space-4); }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+a:hover { border-bottom-color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+code, pre, kbd, samp {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 0.9em;
+}
+code {
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-1);
+  color: var(--ink);
+}
+pre {
+  background: var(--code-bg);
+  padding: var(--space-4);
+  border-radius: var(--radius-2);
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  margin: 0 0 var(--space-4);
+}
+pre code { background: none; padding: 0; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-1);
+  padding: var(--space-2) var(--space-4);
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+button:hover { border-color: var(--line-strong); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+button.btn-ghost { background: transparent; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: var(--space-8) 0;
+}
+
+/* Section divider marker — "── § 02 ──" */
+.section-marker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--fs-12);
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: var(--space-8) 0 var(--space-4);
+}
+.section-marker::before,
+.section-marker::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* Visually hidden — for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* Loading web fonts — Fraunces / Inter / JetBrains Mono, local self-hosted subset via @font-face
+   For first slice, we fall back to system stacks if fonts not loaded yet.
+   Local font files can be added later in /assets/fonts/. */

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Whisper 中文手册 —— 上传音频，服务器跑 Python Whisper 推理，把结果流回网页。" />
+  <title>Whisper 中文手册</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23C25A2C'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%23FAF7F2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <style>
+    html:not(.theme-dark) { color-scheme: light; }
+    html.theme-dark { color-scheme: dark; }
+    .hero { padding: var(--space-10) 0 var(--space-8); }
+    .hero h1 { font-size: var(--fs-49); margin-bottom: var(--space-4); max-width: 22ch; }
+    .hero p.lead { font-size: var(--fs-20); color: var(--ink-mute); max-width: 50ch; margin: 0; }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+      margin: var(--space-8) 0;
+    }
+    .action {
+      padding: var(--space-5);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-3);
+      transition: border-color var(--dur-fast) var(--ease-out),
+                  transform var(--dur-fast) var(--ease-out);
+      display: flex;
+      flex-direction: column;
+    }
+    .action:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .action.disabled { opacity: 0.5; pointer-events: none; }
+    .action .icon-wrap {
+      width: 48px; height: 48px;
+      border-radius: var(--radius-2);
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-4);
+    }
+    .action .icon-wrap svg { width: 24px; height: 24px; }
+    .action h2 { font-size: var(--fs-25); margin: 0 0 var(--space-2); }
+    .action p { color: var(--ink-mute); font-size: var(--fs-14); margin: 0 0 var(--space-4); flex: 1; }
+    .action .go {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--accent);
+      font-weight: 500;
+      font-size: var(--fs-14);
+      border-bottom: none;
+    }
+    .action .go::after { content: "→"; }
+    @media (max-width: 880px) { .actions { grid-template-columns: 1fr; } }
+
+    .secondary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+      margin-top: var(--space-4);
+    }
+    .secondary a {
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-2);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: var(--fs-14);
+      border-bottom: none;
+    }
+    .secondary a:hover { border-color: var(--accent); }
+    .secondary a code { font-family: "JetBrains Mono", monospace; color: var(--accent); margin-right: var(--space-2); }
+    @media (max-width: 880px) { .secondary { grid-template-columns: 1fr; } }
+  </style>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("whisperweb:theme");
+        var dark = stored ? stored === "dark" : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("theme-dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/health.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+  <div class="health-bar" data-health-bar>
+    <div class="container">
+      <span data-health-badge></span>
+      <span style="color: var(--ink-faint); font-size: var(--fs-12);">
+        服务端未就绪时，所有「在服务器运行」按钮会失效。点徽章查看修复方法。
+      </span>
+    </div>
+  </div>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p style="font-family: 'JetBrains Mono', monospace; font-size: var(--fs-12); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 var(--space-3);">
+          § Whisper 中文手册
+        </p>
+        <h1>上传音频，服务器跑 Whisper，结果流回网页。</h1>
+        <p class="lead">
+          浏览器把音频 POST 给 Node 服务，服务 spawn 出 Python <code>whisper</code> 子进程，把每一行进度用 SSE 实时推回。结果可下载、可换六种格式、可点击任意词跳音频。
+        </p>
+
+        <div class="actions">
+          <a class="action" href="playground.html">
+            <div class="icon-wrap"><span data-icon="music"></span></div>
+            <h2>沙盘</h2>
+            <p>上传音频或用内置 JFK 样本。挑模型、温度、词级时间戳等参数，点运行看实时结果。</p>
+            <span class="go">开始转写</span>
+          </a>
+          <a class="action" href="cli.html">
+            <div class="icon-wrap"><span data-icon="sparkle"></span></div>
+            <h2>命令行生成器</h2>
+            <p>勾选参数，命令行实时更新。复制到 Linux / macOS / Windows 终端直接跑，或点「在服务器运行」在这里跑。</p>
+            <span class="go">构建命令</span>
+          </a>
+          <a class="action" href="models.html">
+            <div class="icon-wrap"><span data-icon="download"></span></div>
+            <h2>下载模型</h2>
+            <p>OpenAI 公开的 12 个模型权重，三个代表尺寸（tiny 75 MB / small 466 MB / large-v3 2.9 GB）可一键下载到本地。</p>
+            <span class="go">获取权重</span>
+          </a>
+        </div>
+
+        <div class="secondary">
+          <a href="output-formats.html"><code>txt/vtt/srt/...</code>查看 6 种输出格式的差异</a>
+          <a href="languages.html"><code>99 种</code>查看支持的全部语言</a>
+          <a href="https://github.com/openai/whisper" target="_blank" rel="noopener"><code>↗</code>Whisper 仓库</a>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding: var(--space-6) 0 var(--space-10);">
+      <div class="container">
+        <div style="border-top: 1px solid var(--line); padding-top: var(--space-5); color: var(--ink-mute); font-size: var(--fs-13);">
+          <p style="margin: 0 0 var(--space-2);">
+            <strong style="color: var(--ink);">部署要求：</strong>Python 3.8+ · ffmpeg · <code>pip install openai-whisper</code> · Node.js ≥ 18。
+          </p>
+          <p style="margin: 0;">
+            基于 <a href="https://github.com/openai/whisper" target="_blank" rel="noopener">OpenAI Whisper</a> · MIT · 仓库源码 <code>Whisper/</code> 同步引入。
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" data-site-footer></footer>
+
+  <script>
+    // 等待健康检查，根据结果灰化「运行」相关按钮
+    window.WW_HEALTH.onUpdate((info) => {
+      if (!info || info.ok) return;
+      document.querySelectorAll("a.action").forEach((el) => {
+        // 输出格式 / 模型 / 语言 页仍可访问；沙盘和命令行依赖 Python
+        const href = el.getAttribute("href");
+        if (href === "playground.html" || href === "cli.html") {
+          el.classList.add("disabled");
+          const go = el.querySelector(".go");
+          if (go) go.textContent = "需要 Python 服务";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Whisper 的 12 个模型：参数规模、显存占用、推理速度，以及下载入口。" />
+  <title>模型 —— Whisper 中文手册</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23C25A2C'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%23FAF7F2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <style>
+    html:not(.theme-dark) { color-scheme: light; }
+    html.theme-dark { color-scheme: dark; }
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-14);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-3);
+      overflow: hidden;
+    }
+    .model-table th, .model-table td {
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+    .model-table th {
+      background: var(--bg);
+      font-family: "Fraunces", serif;
+      font-weight: 600;
+      color: var(--ink-mute);
+      font-size: var(--fs-12);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .model-table tbody tr:last-child td { border-bottom: 0; }
+    .model-table code { font-size: var(--fs-12); }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-12);
+      font-family: "JetBrains Mono", monospace;
+    }
+    .pill.en { background: var(--info-soft); color: var(--info); }
+    .pill.multi { background: var(--accent-soft); color: var(--accent); }
+    .pill.turbo { background: var(--good-soft); color: var(--good); }
+    .pill.deprecated { background: var(--warn-soft); color: var(--warn); }
+    .bar-cell { position: relative; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+    .bar-cell > span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+
+    .download-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+      margin: var(--space-4) 0;
+    }
+    .download-card {
+      padding: var(--space-4);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-2);
+      background: var(--surface);
+      text-align: center;
+    }
+    .download-card h4 { font-size: var(--fs-20); margin: 0 0 var(--space-1); }
+    .download-card .size {
+      font-family: "JetBrains Mono", monospace;
+      font-size: var(--fs-12);
+      color: var(--ink-faint);
+      margin-bottom: var(--space-3);
+    }
+    .download-card a {
+      display: inline-block;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+      color: #fff;
+      border-bottom: 0;
+      font-size: var(--fs-14);
+    }
+    .download-card a:hover { background: var(--accent-hover); }
+    .download-card .note {
+      font-size: var(--fs-12);
+      color: var(--ink-mute);
+      margin-top: var(--space-3);
+    }
+    @media (max-width: 720px) {
+      .download-row { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("whisperweb:theme");
+        var dark = stored ? stored === "dark" : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("theme-dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/samples.js"></script>
+  <script>
+    (function () {
+      function render() {
+        const MODELS = window.WW_MODELS || [];
+        const tbody = document.querySelector("[data-models-tbody]");
+        if (!tbody) return;
+        tbody.innerHTML = MODELS.map((m) => {
+          let pill;
+          if (m.id === "turbo") pill = `<span class="pill turbo">turbo</span>`;
+          else if (m.en_only) pill = `<span class="pill en">英语专用</span>`;
+          else if (["large-v1", "large-v2"].includes(m.id)) pill = `<span class="pill deprecated">旧版</span>`;
+          else pill = `<span class="pill multi">多语言</span>`;
+          const paramPct = Math.round((m.params_m / 1550) * 100);
+          const speedPct = Math.round((m.speed_x / 10) * 100);
+          return `<tr>
+            <td><code>${m.id}</code> ${pill}</td>
+            <td>${m.params_m}M</td>
+            <td><div class="bar-cell" title="${m.params_m}M 参数"><span style="width:${paramPct}%"></span></div></td>
+            <td>~${m.vram_gb} GB</td>
+            <td><div class="bar-cell" title="${m.speed_x}× 相对速度"><span style="width:${speedPct}%; background: var(--info);"></span></div></td>
+            <td style="color: var(--ink-mute);">${m.desc}</td>
+          </tr>`;
+        }).join("");
+      }
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
+      else render();
+    })();
+  </script>
+</head>
+<body>
+  <div data-site-header></div>
+  <div class="health-bar" data-health-bar>
+    <div class="container">
+      <span data-health-badge></span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: var(--fs-12); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 var(--space-3);">
+        § 模型
+      </p>
+      <h1>12 个模型，5 个尺寸档。</h1>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        Whisper 提供 5 档参数规模（39M 到 15 亿），其中 4 档各有英语专用版本，再加一个面向 large-v3 解码器剪枝的 turbo 模型。共 12 个。模型越大越准，但显存与延迟同步上升。
+      </p>
+
+      <div class="section-marker">§ 01 —— 下载</div>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        模型权重从 OpenAI 公共 CDN 下载。每个按钮对应一个代表模型。下载的文件保存路径由浏览器决定（默认下载目录）。
+      </p>
+
+      <div class="download-row">
+        <div class="download-card">
+          <h4>小型 · <code>tiny</code></h4>
+          <div class="size">75 MB · 39M 参数</div>
+          <a href="/api/download/tiny" download="tiny.pt">下载 tiny.pt</a>
+          <p class="note">最快、最低资源，原型阶段首选。</p>
+        </div>
+        <div class="download-card">
+          <h4>中型 · <code>small</code></h4>
+          <div class="size">466 MB · 244M 参数</div>
+          <a href="/api/download/small" download="small.pt">下载 small.pt</a>
+          <p class="note">速度与精度的平衡点。</p>
+        </div>
+        <div class="download-card">
+          <h4>大型 · <code>large-v3</code></h4>
+          <div class="size">2.9 GB · 1550M 参数</div>
+          <a href="/api/download/large-v3" download="large-v3.pt">下载 large-v3.pt</a>
+          <p class="note">当前最强精度，需要 10 GB 显存。</p>
+        </div>
+      </div>
+
+      <div class="section-marker">§ 02 —— 完整目录</div>
+
+      <table class="model-table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>参数</th>
+            <th>规模</th>
+            <th>显存</th>
+            <th>速度</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody data-models-tbody></tbody>
+      </table>
+
+      <p style="color: var(--ink-mute); font-size: var(--fs-12); margin-top: var(--space-3);">
+        速度为相对 large 模型在 A100 上的转写速度（README 给出的参考值）。实际速度受语种、说话速度、硬件影响。
+      </p>
+
+      <div class="section-marker">§ 03 —— 三个关键维度</div>
+      <p style="color: var(--ink-mute); max-width: 60ch;">
+        选模型只关心三件事：精度目标、显存预算、是否能翻译。下表把它们交叉：
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>按精度目标选</h4>
+          <p>首选 <code>large-v3</code>，多语种目前最强。<code>turbo</code> 在英语上精度损失很小，速度快 8 倍，是性价比首选。旧版 <code>large-v1</code>、<code>large-v2</code> 已不推荐。</p>
+        </div>
+        <div class="feature-card">
+          <h4>按显存预算选</h4>
+          <p>≤ 2 GB 用 <code>tiny</code> 或 <code>base</code>。2–5 GB 用 <code>small</code>。5–8 GB 用 <code>medium</code> 或 <code>turbo</code>。≥ 10 GB 才能跑 <code>large-v3</code>。注意 FP16 减半，FP32 倍之。</p>
+        </div>
+        <div class="feature-card">
+          <h4>按是否能翻译选</h4>
+          <p>要 X 语言转写为英语：必须用多语言模型（<code>tiny</code> 到 <code>large-v3</code>）。<code>turbo</code> 与所有 <code>.en</code> 模型不支持翻译。</p>
+        </div>
+      </div>
+
+      <div class="section-marker">§ 04 —— 三个容易踩的坑</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>① <code>.en</code> 不是「更准」，是「只能英语」</h4>
+          <p>英语专用模型只在英语任务上比同尺寸的多语言模型略好。当 <code>language</code> 不是 <code>en</code> 时，沙盘会自动屏蔽 <code>.en</code> 选项。如果代码里强制传英语专用模型去转写非英语，会拿到不可预测的结果。</p>
+        </div>
+        <div class="feature-card">
+          <h4>② turbo 不是 large 的「加速版」</h4>
+          <p>turbo 是 large-v3 的解码器层数减半版本（8.09 亿参数），速度提升约 8 倍。代价是去掉了翻译能力，多语种精度也有轻微下降。如果业务以英语转写为主且要速度，turbo 比 large-v3 划算。</p>
+        </div>
+        <div class="feature-card">
+          <h4>③ 显存数值是 FP16 的</h4>
+          <p>表格中的显存假设为 FP16 推理。在 CPU 上（强制 FP32）占用翻倍。如果在 MPS（Apple Silicon）上跑，部分模型还不支持，需要强制 <code>fp16=False</code>。</p>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer" data-site-footer></footer>
+<script src="assets/js/health.js"></script>
+</body>
+</html>
