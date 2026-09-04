@@ -413,13 +413,21 @@
       btn.addEventListener("click", () => {
         currentTask = btn.getAttribute("data-task-btn");
         $all("[data-task-btn]", root).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-        // 选了「翻译到英」时，禁止选 turbo（turbo 不支持翻译）
         const modelSel = $("[name=model]", root);
-        if (modelSel) {
-          const opt = modelSel.options[modelSel.selectedIndex];
-          if (currentTask === "translate" && opt && opt.text && opt.text.startsWith("turbo")) {
-            for (let i = 0; i < modelSel.options.length; i++) {
-              if (!modelSel.options[i].text.startsWith("turbo")) { modelSel.selectedIndex = i; break; }
+        if (!modelSel) return;
+        const opt = modelSel.options[modelSel.selectedIndex];
+        const txt = opt ? opt.text : "";
+        // 选了「翻译到英」时，强制切到多语言模型
+        if (currentTask === "translate") {
+          // 检查当前是否英语专用（含 .en 结尾或 optgroup label）
+          const isEnOnly = opt && (opt.parentElement.label === "English-only" || /\.en\b/.test(opt.value));
+          if (!isEnOnly && !txt.startsWith("turbo")) return;  // 当前已经合规
+          // 选第一个多语言非 turbo 模型
+          for (let i = 0; i < modelSel.options.length; i++) {
+            const o = modelSel.options[i];
+            if (o.parentElement.label !== "English-only" && !o.value.startsWith("turbo")) {
+              modelSel.selectedIndex = i;
+              break;
             }
           }
         }
