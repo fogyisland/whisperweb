@@ -82,7 +82,12 @@ def main():
         emit({"event": "error", "message": "导入失败：%s。请先 pip install openai-whisper" % e})
         sys.exit(2)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # 设备选择：WHISPER_DEVICE 环境变量优先，否则自动检测 CUDA
+    env_device = os.environ.get("WHISPER_DEVICE", "").lower()
+    if env_device in ("cuda", "cpu"):
+        device = env_device
+    else:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     emit_stage("loading_model", model=args.model, device=device, model_dir=MODEL_DIR)
 
     try:

@@ -16,23 +16,26 @@ Windows：双击 start.bat
 macOS / Linux：./start.sh
 ```
 
-无需预装 Node.js（内置在 `node/`）。需要本机已装：
-- Python 3.8+
-- ffmpeg
-- `pip install openai-whisper`
+首次启动会：
+1. 检测 GPU（`nvidia-smi` 在 → CUDA，否则 CPU）
+2. 自动创建 `venv/`（从项目内置 `python/` 创建）
+3. 安装 PyTorch（CUDA 12.6 ~2.5 GB 或 CPU ~200 MB）+ openai-whisper
+4. 启动 Node + 浏览器
 
-详见 `DEPLOY.md`。
+无需预装任何东西（Node 和 Python 都内置在项目里）。`ffmpeg` 仍需系统装（Windows 用 `choco install ffmpeg`，macOS `brew install ffmpeg`）。
+
+可强制模式：`WHISPER_DEVICE=cuda` 或 `=cpu`。
 
 ## 目录结构
 
 ```
-publish/
 ├── web/                 前端（7 个 HTML + 7 个 JS + 4 个 CSS）
 ├── node/                内置 Node.js 22 LTS portable
+├── python/              内置 Python 3.12 portable（用于创建 venv）
 ├── server.js            Node HTTP 服务
 ├── whisper_runner.py    Python Whisper 推理包装
-├── translator.py         ← 接翻译模型时新建
-├── package.json         npm 启动脚本
+├── venv/                首次启动自动创建（PyTorch + openai-whisper）
+├── models/whisper/      Whisper 权重（首次按需下载）
 ├── start.bat / start.sh 一键启动
 ├── DEPLOY.md            部署文档
 └── README.md            本文件

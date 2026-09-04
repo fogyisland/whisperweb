@@ -18,6 +18,9 @@ Whisper/
 # 模型缓存（Whisper 权重，下载一次后缓存在项目内的 models/whisper/）
 models/
 
+# Python 虚拟环境（首次启动时由 start.bat / start.sh 自动创建并装 CUDA torch + openai-whisper）
+venv/
+
 # 构建产物（不提交；publish.bat 或 publish.sh 现场重建）
 publish/
 

@@ -1,0 +1,14 @@
+# Python dependencies for Whisper 中文手册
+# 由 start.bat / start.sh 在首次启动时自动装到 venv/，手动装也行：
+
+#     python -m venv venv
+#     source venv/bin/activate  (Linux/macOS)
+#     venv\Scripts\activate.bat  (Windows)
+#     pip install -r requirements.txt
+
+# PyTorch CUDA 12.6 wheels（适配 NVIDIA 驱动 ≥ 12.6，CUDA 13.x 驱动向后兼容）
+--extra-index-url https://download.pytorch.org/whl/cu126
+torch
+
+# Whisper 模型
+openai-whisper
