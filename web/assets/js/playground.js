@@ -10,6 +10,7 @@
   let currentSample = null;
   let uploadedFile = null;
   let lastResult = null;
+  let currentTask = "transcribe";  // 模块级变量，readSettings 直接读，wirePlayground 改
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
@@ -154,7 +155,7 @@
     };
     return {
       model: get("model") || "turbo",
-      task: get("task") || "transcribe",
+      task: currentTask,
       language: get("language") || null,
       output_format: get("output_format") || "json",
       temperature: Number(get("temperature") || 0),
@@ -198,6 +199,8 @@
     for (const [k, v] of Object.entries(s)) {
       if (v !== null && v !== undefined && v !== "") fd.append(k, String(v));
     }
+    // 把当前任务暴露给用户看（调试用） + 暴露到 window
+    if (status) status.textContent = `准备上传… 任务=${s.task} 模型=${s.model} 输出=${s.output_format}`;
 
     // 初始化 stages 显示
     const stageNames = ["loading", "loading_model", "model_loaded", "transcribing", "done"];
@@ -405,26 +408,16 @@
       b.addEventListener("click", () => setOutputTab(b.getAttribute("data-tab"), root));
     });
 
-    // 任务切换（转写 / 翻译到英）：写一个隐藏 input 让 readSettings 能读到
-    let hiddenTask = root.querySelector("input[name=task]");
-    if (!hiddenTask) {
-      hiddenTask = document.createElement("input");
-      hiddenTask.type = "hidden";
-      hiddenTask.name = "task";
-      hiddenTask.value = "transcribe";
-      root.querySelector("[data-playground]") && root.appendChild(hiddenTask);
-    }
+    // 任务切换（转写 / 翻译到英）：写到模块级 currentTask，readSettings 直接读
     $all("[data-task-btn]", root).forEach((btn) => {
       btn.addEventListener("click", () => {
-        const v = btn.getAttribute("data-task-btn");
+        currentTask = btn.getAttribute("data-task-btn");
         $all("[data-task-btn]", root).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-        hiddenTask.value = v;
         // 选了「翻译到英」时，禁止选 turbo（turbo 不支持翻译）
         const modelSel = $("[name=model]", root);
         if (modelSel) {
           const opt = modelSel.options[modelSel.selectedIndex];
-          if (v === "translate" && opt && opt.text && opt.text.startsWith("turbo")) {
-            // 选第一个非 turbo 选项
+          if (currentTask === "translate" && opt && opt.text && opt.text.startsWith("turbo")) {
             for (let i = 0; i < modelSel.options.length; i++) {
               if (!modelSel.options[i].text.startsWith("turbo")) { modelSel.selectedIndex = i; break; }
             }
