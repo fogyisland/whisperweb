@@ -23,6 +23,13 @@ import time
 import tempfile
 import traceback
 
+# 强制 stdout 用 UTF-8（Windows 默认 GBK 会让中文乱码）
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 # 把仓库内的 Whisper 源码加入 import 路径，优先使用本地版本。
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOCAL_WHISPER = os.path.join(HERE, "Whisper")

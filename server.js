@@ -197,7 +197,9 @@ function handleTranscribe(req, res) {
       "X-Accel-Buffering": "no",
     });
 
-    const child = spawn(PYTHON, argv, { stdio: ["ignore", "pipe", "pipe"] });
+    // 强制 Python 子进程输出 UTF-8（Windows 默认是 GBK，中文会乱码）
+    const childEnv = { ...process.env, PYTHONIOENCODING: "utf-8" };
+    const child = spawn(PYTHON, argv, { stdio: ["ignore", "pipe", "pipe"], env: childEnv });
     let buf = "";
     const sendEvent = (obj) => {
       const name = obj.event || "message";
